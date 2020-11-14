@@ -1,18 +1,15 @@
 import sys
-import csv
-import numpy as np
-from csv import reader
 import pandas as pd
 
 
 def pre_process(df):
   '''
-  :param dataset: List
-  :return: List
+  :param dataset: Data Frame
+  :return: Data Frame
   '''
-  a=['Phone','Area Code','Day Charge','Eve Charge','Night Charge','Intl Charge']  #Xóa các cột dữ liệu không tác động tới Churn
+  Remove=['State','Phone','Area Code','Day Charge','Eve Charge','Night Charge','Intl Charge']  #Xóa các cột dữ liệu không tác động tới Churn
   #'State', 'Area Code',
-  df.drop(a,axis=1,inplace=True)
+  df.drop(Remove,axis=1,inplace=True)
   return df
 
 def hierarchies(df):
@@ -24,8 +21,9 @@ def hierarchies(df):
   '''a=['Account Length','VMail Message','Day Mins','Day Calls','Eve Mins','Eve Calls'
       ,'Night Mins','Night Calls','Intl Mins','Intl Calls','CustServ Calls']'''
 
-  bins=df['Account Length'].quantile([0,0.35,0.65,1])
-  grade_rank = pd.cut(df['Account Length'], bins, right=False,labels=['Short','Middle_Length','Long'])
+
+  range = [0, 100, 200, 250]
+  grade_rank = pd.cut(df['Account Length'], range, right=False,labels=['Short','Middle_Length','Long'])
   df['Account Length'] = grade_rank
 
   range=[0,9,41,51]             #0->13 None 13->23 Middle 23->51 Large
@@ -74,25 +72,18 @@ def hierarchies(df):
   grade_rank = pd.cut(df['CustServ Calls'], range, right=False, labels=['0->5','5->10'],duplicates='drop')
   df['CustServ Calls'] = grade_rank
 
-  #df['Area Code'] = df['Area Code'].astype('category')
-
 
   return df
 
+def main(fileinput,output,nrows):
+  df=pd.read_csv(fileinput, nrows=int(nrows))  #Xử lí trên chuỗi con của dữ liệu(1000 Hàng đầu tiên)
+  pre_process(df)
+  df=hierarchies(df)
+  df.to_csv(output,index=False)
+main(sys.argv[1],sys.argv[2],sys.argv[3])
+try:
+  main(sys.argv[1],sys.argv[2],sys.argv[3])
+  print("Thành Công")
+except:
+  print("Nhập Không Hợp Lệ")
 
-
-file='churn.txt'
-df=pd.read_csv(file, nrows=1000)   #Xử lí trên chuỗi con của dữ liệu(1000 Hàng đầu tiên)
-#print(df.shape)
-pre_process(df)
-#print(df.shape)
-
-#print(df)
-Output="data.txt"
-
-#print(df.mean(axis = 0, skipna = True)['Eve Calls'])
-#print(df.mean(axis = 0, skipna = True))
-#print(df.columns)
-df=hierarchies(df)
-print(df.dtypes)
-df.to_csv(Output,index=False)
